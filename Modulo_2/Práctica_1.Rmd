@@ -1,0 +1,90 @@
+---
+title: "Hechos estilizados en rendimientos internacionales"
+author: "Maria Fernanda Gómez Flores"
+date: "2026-08-31"
+output: html_document
+---
+# I) Introducción
+
+En esta actividad voy a analizar el comportamiento de los rendimientos de tres activos que cotizan fuera de la Bolsa Mexicana de Valores: Apple (AAPL), NVIDIA (NVDA) y Tesla (TSLA).
+
+Elegí estas tres empresas porque son muy conocidas y aunque las tres pertenecen al mercado estadounidense, tienen comportamientos diferentes en sus precios y rendimientos. Esto me permite comparar si los hechos estilizados se presentan de la misma manera en los tres activos o si existen diferencias entre ellos.
+
+Para el análisis voy a utilizar precios diarios de los últimos cinco años. Elegí este periodo porque me permite tener suficientes datos para observar mejor el comportamiento de los rendimientos y además incluye periodos con distintos niveles de volatilidad.
+
+Para analizar los hechos estilizados voy a utilizar rendimientos logarítmicos, ya que permiten medir los cambios en el precio de un periodo a otro y son muy utilizados para trabajar con series financieras.
+
+## Descarga de precios
+
+Para los tres activos voy a utilizar precios diarios de los últimos cinco años, comenzando el 31 de agosto de 2021.
+
+Elegí un periodo de cinco años porque me permite tener una cantidad suficiente de observaciones para analizar mejor el comportamiento de los rendimientos y además incluye distintos periodos de alta y baja volatilidad.
+
+Los datos se obtienen directamente de Yahoo Finance utilizando la librería `quantmod` de R. Para cada activo voy a utilizar el precio ajustado.
+
+# II) Análisis de los hechos estilizados
+
+## Activo 1: Apple Inc. (AAPL)
+```{r}
+library(quantmod)
+library(moments)
+
+ticker <- "AAPL"
+
+getSymbols(
+  ticker,
+  src = "yahoo",
+  from = "2021-08-31"
+)
+
+price <- Ad(get(ticker))
+head(price)
+```
+
+### Serie de precios
+```{r}
+plot(
+  price,
+  main = paste(ticker, "- Adjusted Price"),
+  ylab = "Price",
+  xlab = ""
+)
+```
+
+### Rendimiento simple y logarítmico
+```{r}
+simple_return <- dailyReturn(
+  na.omit(price),
+  type = "arithmetic"
+)
+
+log_return <- dailyReturn(
+  na.omit(price),
+  type = "log"
+)
+
+head(cbind(simple_return, log_return))
+```
+
+### Gráfica de los rendimientos logarítmicos
+```{r}
+plot(
+  log_return,
+  main = paste(ticker, "- Daily Log Returns"),
+  ylab = "Log Return",
+  xlab = ""
+)
+
+abline(h = 0, lty = 2)
+```
+### Hecho I: Dependencia lineal débil de los rendimientos
+
+Este hecho se refiere a que los rendimientos pasados normalmente tienen poca relación lineal con los rendimientos futuros. Es decir, que el rendimiento de un día no necesariamente nos ayuda a predecir el rendimiento del día siguiente.
+
+```{r}
+acf(
+  na.omit(log_return),
+  main = "ACF of Log Returns"
+)
+```
+
