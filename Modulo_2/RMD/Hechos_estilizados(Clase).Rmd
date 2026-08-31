@@ -1,0 +1,130 @@
+---
+title: "Hechos estilizados"
+author: "María Fernanda Gómez Flores"
+date: "2026-08-31"
+output: html_document
+---
+
+```{r}
+library(quantmod)
+library(moments)
+ticker <- "GFNORTEO.MX"
+
+getSymbols(
+  ticker,
+  src = "yahoo",
+  from = "2015-01-01"
+)
+
+price <- Ad(get(ticker))
+head(price)
+```
+
+2. Graficar la serie de precios
+
+```{r}
+plot(
+  price,
+  main = paste(ticker, "- Adjusted Price"),
+  ylab = "Price",
+  xlab = ""
+)
+```
+
+3. Rendimiento simple y logarítmico
+
+```{r returns}
+simple_return <- dailyReturn(na.omit(price), type = "arithmetic")
+log_return    <- dailyReturn(na.omit(price), type = "log")
+
+head(cbind(simple_return, log_return))
+```
+
+```{r return-plot}
+plot(
+  log_return,
+  main = paste(ticker, "- Daily Log Returns"),
+  ylab = "Log Return",
+  xlab = ""
+)
+
+abline(h = 0, lty = 2)
+```
+
+6. Hecho I: Dependencia lineal de los rendimientos
+
+Si ayer el rendimiento fue alto, ¿eso parece decirnos mucho sobre el rendimiento de hoy?
+
+```{r}
+acf(
+  na.omit(log_return),
+  main = "ACF of Log Returns"
+)
+```
+
+7. Hecho II: Cluster de volatilidad
+
+```{r acf-squared}
+acf(
+  na.omit(log_return)^2,
+  main = "ACF of Squared Returns"
+)
+```
+
+8: Hecho III: Colas pesadas
+
+```{r}
+r <- as.numeric(na.omit(log_return))
+
+hist(
+  r,
+  breaks = 50,
+  probability = TRUE,
+  main = paste(ticker, "- Distribution of Log Returns"),
+  xlab = "Log Return"
+)
+
+lines(
+  density(r),
+  lwd = 2
+)
+
+mu_hat    <- mean(r)
+sigma_hat <- sd(r)
+
+curve(
+  dnorm(x, mean = mu_hat, sd = sigma_hat),
+  add = TRUE,
+  lwd = 2,
+  lty = 2
+)
+
+legend(
+  "topright",
+  legend = c("Empirical density", "Normal benchmark"),
+  lty = c(1, 2),
+  lwd = c(2, 2),
+  bty = "n"
+)
+```
+
+9: Hecho 4 Asimetria
+
+```{r}
+mean_return <- mean(r)
+sd_return   <- sd(r)
+skew_return <- skewness(r)
+kurt_return <- kurtosis(r)
+
+excess_kurtosis <- kurt_return - 3
+
+summary_stats <- data.frame(
+  Mean = mean_return,
+  SD = sd_return,
+  Skewness = skew_return,
+  Kurtosis = kurt_return,
+  Excess_Kurtosis = excess_kurtosis
+)
+
+summary_stats
+```
