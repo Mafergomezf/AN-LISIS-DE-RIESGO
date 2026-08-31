@@ -48,6 +48,12 @@ Esta división le permite a Alsea participar en diferentes segmentos del consumo
 
 # Análisis de estados financieros
 
+```{r}
+library(tidyverse)
+library(fpp3)
+library(tidyquant)
+```
+
 ## Ingresos
 
 ## Margen de utilidad bruta
