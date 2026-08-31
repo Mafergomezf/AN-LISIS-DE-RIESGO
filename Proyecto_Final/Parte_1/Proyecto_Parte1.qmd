@@ -2,17 +2,18 @@
 title: "Proyecto Final - Parte 1"
 format:
   html:
+    toc: true
+    number-sections: true
     embed-resources: true
 ---
-
 
 # Introducción
 
 # Descripción general del activo y del negocio
 
-## Giro y función principal
+## Giro y función principal de la empresa
 
-## Inicio de operaciones y evolución general
+## Fecha de inicio de operaciones y evolución general
 
 ## Principales líneas de negocio
 
@@ -22,25 +23,23 @@ format:
 
 ## Número aproximado de empleados
 
-## Infraestructura clave
+## Ubicación de plantas productivas, centros logísticos o infraestructura clave
 
 ## Principales competidores y posición en el mercado
 
 ## Eventos recientes relevantes
 
-
 # Análisis de estados financieros
 
 ## Ingresos
 
-## Margen bruto
+## Margen de utilidad bruta
 
-## Margen operativo
+## Margen de utilidad operativa
 
-## Margen neto
+## Margen de utilidad neta
 
-## Endeudamiento y estructura de capital
-
+## Nivel de endeudamiento y estructura del capital
 
 # Indicadores financieros clave
 
@@ -54,14 +53,15 @@ format:
 
 ## Margen EBITDA
 
+# Cálculo del EPS trimestral 2019-2025
 
-# EPS trimestral 2019-2025
+# Dividendos y Split
 
+## Dividendos
 
-# Dividendos y splits
+## Split
 
-
-# Identificación de riesgos
+# Identificación de los tipos de riesgos
 
 ## Riesgos operativos
 
@@ -69,8 +69,6 @@ format:
 
 ## Riesgos financieros
 
-
 # Conclusión
-
 
 # Referencias
