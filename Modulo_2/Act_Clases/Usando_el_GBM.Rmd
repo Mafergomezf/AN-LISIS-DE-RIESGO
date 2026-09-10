@@ -1,0 +1,50 @@
+---
+title: "Usando el GBM"
+author: "Maria Fernanda Gómez Flores"
+date: "2026-09-10"
+output: html_document
+---
+
+```{r}
+library(quantmod)
+library(moments)
+library(tseries)
+```
+
+
+# Descargar datos reales
+```{r}
+# Descargar datos reales
+ticker <- "GFNORTEO.MX"
+
+getSymbols(ticker, src = "yahoo", from = "2015-01-01")
+precio <- na.omit(Ad(get(ticker)))
+
+```
+#Precio, log del precio y los rendimientos
+
+```{r}
+log_precio <- log(precio)
+simple_rend <- dailyReturn(precio, type="arithmetic")
+log_rend <- dailyReturn(precio, type="log")
+head(cbind(simple_rend,log_rend))
+
+```
+
+```{r}
+plot(log_precio,main="Log Precio",col="blue")
+plot(precio, main="Precio",col="red")
+hist(precio,n=100,main="Histograma del precio",col="green")
+plot(log_rend,n=100,main="Rendimiento",col="purple")
+hist(log_rend,n=100,main="Histograma del Rendimiento",col="pink")
+
+
+```
+
+# Media y la volatilidad diaria
+```{r}
+r <-mean(log_rend)
+R=mean(simple_rend)
+
+```
+
