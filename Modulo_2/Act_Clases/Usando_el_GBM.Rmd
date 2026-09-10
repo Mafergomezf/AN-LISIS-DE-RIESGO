@@ -45,6 +45,19 @@ hist(log_rend,n=100,main="Histograma del Rendimiento",col="pink")
 ```{r}
 r <-mean(log_rend)
 R=mean(simple_rend)
+sigma_log <- sd(log_rend)
+mean_log <- r
+sigma_log
+mean_log
+```
+pregunta,la media del rendimiento logaritmico, es casi cero. ¿Podemos decir que es estadisticamente igual a cero?
 
+$$Ho: \mu_r=0$$
+$$Ha: \mu_r\neq 0$$
+
+```{r}
+t.test(as.numeric(log_rend), mu = 0, alternative = "two.sided")
 ```
 
+
+Como el valor del pvalue es muy alto, eso implica que la probabilidad de rechazar Ho,cuandao es 
