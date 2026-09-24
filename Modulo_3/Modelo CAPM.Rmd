@@ -145,19 +145,19 @@ df_rend_capm <- data.frame(Mes=as.yearmon(index(rend_precios)),Activo=as.numeric
 En el modelo lo que observamos son los rendimientos excedenetes tanto del mercado como del activo resécto de la tasa de libre riesgo, entonces debemos calcular ese excedente 
 
 ```{r}
-capm_excedentes <-data.frame(Eif= df_rend_capm$Activo-df_rend_capm$tasaLR,
-                             Emf=df_rend_capm$Mercado-df_rend_capm$tasaLR)
+capm_excedentes <-data.frame(Eif= df_rend_capm$Activo-df_rend_capm$TasaLR,
+                             Emf=df_rend_capm$Mercado-df_rend_capm$TasaLR)
 
 ```
 
 ```{r}
-matplot(df_rend_capm[,c("Activo","Mercado","TasaLR")], 
-        type = "l", 
-        col=cols,
-        xlab = "Mes", 
-        ylab = "Rendimiento",
-        main="Rendimientos del activo y del mercado",
-        )
+matplot(
+  df_rend_capm[, c("Activo", "Mercado", "TasaLR")],
+  type = "l",
+  xlab = "Mes",
+  ylab = "Rendimiento",
+  main = "Rendimientos del activo y del mercado"
+)
         
 
 ```
@@ -168,11 +168,18 @@ modelo_capm<-lm(Eif~Emf,
                 data=capm_excedentes)
 summary(modelo_capm)
 ```
+El coeficiente Beta es de 1.11 lo que significa....
+
+¿Cuál es el riesgo total mensual de este activo?
 
 ```{r}
-head(capm_excedentes)
-summary(capm_excedentes)
-colSums(is.na(capm_excedentes))
+riesgo_total_mensual~
+```
+
+
+Riesgo sistemático mensual
+```{r}
+beta<- modelo capm[[]]
 ```
 
 
