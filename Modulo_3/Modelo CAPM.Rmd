@@ -1,0 +1,189 @@
+---
+title: "Modelo_CAPM"
+author: "Isaac Emiliano Meza López"
+date: "2026-09-21"
+output: html_document
+---
+
+Tomaremos datos para con ellos estimar el modelo CAPM y verificar si el rendimiento observado del activo es consistente con el rendimiento que el CAPM exige para su nivel de exposicion al riesgo.
+
+Ademas de identificar el riesgo sistematico y no sistematico.
+
+```{r librerias}
+library(PerformanceAnalytics)
+library(quantmod)
+library(httr)
+library(jsonlite)
+library(xts)
+library(zoo)
+```
+
+
+Para el modelo CAPM, usualmente se utilixan los ultimos 5 anos de infromaicon y los datos 
+```{r}
+tic_activo <- "GFNORTEO.MX"
+tic_mercado <- "^MXX"
+serie_banxico <- "SF43936"
+fecha_incio <- as.Date("2021-01-01")
+fecha_fin <- as.Date("2026-09-21")
+```
+
+```{r funcion banxico}
+get_banxico_series <- function(
+    series_id,
+    start_date,
+    end_date,
+    token
+) {
+  
+  url <- paste0(
+    "https://www.banxico.org.mx/",
+    "SieAPIRest/service/v1/series/",
+    series_id,
+    "/datos/",
+    format(start_date, "%Y-%m-%d"),
+    "/",
+    format(end_date, "%Y-%m-%d")
+  )
+  
+  response <- GET(
+    url,
+    add_headers(
+      "Bmx-Token" = token
+    )
+  )
+  
+  stop_for_status(response)
+  
+  parsed <- content(
+    response,
+    as = "parsed",
+    type = "application/json",
+    encoding = "UTF-8"
+  )
+  
+  datos <- parsed$bmx$series[[1]]$datos
+  
+  out <- data.frame(
+    date = as.Date(
+      sapply(datos, `[[`, "fecha"),
+      format = "%d/%m/%Y"
+    ),
+    rate_pct = sapply(
+      datos,
+      `[[`,
+      "dato"
+    ),
+    stringsAsFactors = FALSE
+  )
+  
+  out$rate_pct <- as.numeric(
+    gsub(",", "", out$rate_pct)
+  )
+  
+  out <- out[
+    !is.na(out$rate_pct),
+  ]
+  
+  out
+}
+```
+
+```{r}
+library(httr)
+library(zoo)
+```
+
+
+```{r descarga}
+getSymbols(c(tic_activo, tic_mercado), from = fecha_incio)
+activo_diairo <- Ad(get(tic_activo))
+mercado_diario <- Ad(get("MXX"))
+banxico_token <- "94d5a064a3f068cb493c71f923eb09fc01082959b6f559239da375ee2e910878"
+tasa_diaria <- get_banxico_series(series_id=serie_banxico,
+                                     start_date=fecha_incio,
+                                     end_date=fecha_fin, 
+                                     token=banxico_token)
+```
+
+Como los datos son mesnuales los pondremos en esta temporalidad
+
+```{r ajuste mensual}
+activo_mensaul <- apply.monthly(activo_diairo, FUN = last)
+mercado_mensual <-apply.monthly(mercado_diario, FUN = last)
+precios_mensuales <- merge(activo_mensaul, mercado_mensual)
+
+colnames(precios_mensuales) <- c("activo", "mercado")
+tasa_diaria$rate_pct <- tasa_diaria$rate_pct/100/12
+```
+
+Como la tasa esta en data frame, la voy a poner en serie de tiempo para que sea consistente con las otras tasas, ademas de que debp de tener una por mes.
+
+```{r}
+tasa_diaria <- xts(tasa_diaria$rate_pct, order.by = tasa_diaria$date)
+colnames(tasa_diaria) <- "TasaLR"
+
+```
+
+```{r}
+tasa_mensual<- apply.monthly(tasa_diaria, last)
+```
+
+calcular rendimientos de todo
+
+```{r}
+rend_precios <-na.omit(Return.calculate(precios_mensuales, method = "discrete"))
+rend_tasa <- na.omit(Return.calculate(tasa_mensual, method = "discrete"))
+
+
+df_rend_capm <- data.frame(Mes=as.yearmon(index(rend_precios)),Activo=as.numeric(rend_precios$activo),
+                              Mercado=as.numeric(rend_precios$mercado),
+                              TasaLR=as.numeric(rend_tasa$TasaLR))
+
+```
+
+En el modelo lo que observamos son los rendimientos excedenetes tanto del mercado como del activo resécto de la tasa de libre riesgo, entonces debemos calcular ese excedente 
+
+```{r}
+capm_excedentes <-data.frame(Eif= df_rend_capm$Activo-df_rend_capm$tasaLR,
+                             Emf=df_rend_capm$Mercado-df_rend_capm$tasaLR)
+
+```
+
+```{r}
+matplot(df_rend_capm[,c("Activo","Mercado","TasaLR")], 
+        type = "l", 
+        col=cols,
+        xlab = "Mes", 
+        ylab = "Rendimiento",
+        main="Rendimientos del activo y del mercado",
+        )
+        
+
+```
+Ahora si ya podemos hacer la regresión para encontrar los parámetros
+
+```{r}
+modelo_capm<-lm(Eif~Emf,
+                data=capm_excedentes)
+summary(modelo_capm)
+```
+
+```{r}
+head(capm_excedentes)
+summary(capm_excedentes)
+colSums(is.na(capm_excedentes))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
