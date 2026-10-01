@@ -1,0 +1,297 @@
+---
+title: "Exámen1"
+author: "Maria Fernanda Gómez Flores"
+date: "2026-10-01"
+output: html_document
+---
+# Problema 1
+
+## a) 
+
+```{r}
+library(quantmod)
+library(moments)
+library(tseries)
+```
+
+```{r}
+ticker <- "VOLARA.MX"
+getSymbols(ticker, src="yahoo", from="2023-01-01", to="2025-01-01")
+precio <- na.omit(Ad(get(ticker)))
+```
+
+
+```{r}
+first(index(precio))
+last(index(precio))
+```
+
+```{r}
+plot(precio, main="Precio", col="red")
+```
+
+
+## b)
+
+```{r}
+log_precio <- log(precio)
+simple_rend <- dailyReturn(precio, type="arithmetic")
+log_rend <- dailyReturn(precio, type="log")
+head(cbind(simple_rend, log_rend, log_precio))
+```
+
+```{r}
+plot(log_rend, n=100, main="Rendimiento", col="purple")
+```
+
+
+## c)
+
+```{r}
+r <- mean(log_rend)
+R <- mean(simple_rend)
+sigma_log <- sd(log_rend)
+mean_log <- r
+sigma_log
+mean_log
+```
+
+```{r}
+dias_cot <- 252
+sigma_anual <- sigma_log*sqrt(dias_cot)
+sigma_anual
+sigma_log
+```
+
+```{r}
+mu_log_anual <-dias_cot*mean_log
+mu_log_anual
+mu_gbm_anual <- mu_log_anual+0.5*sigma_anual^2
+mu_gbm_anual
+```
+
+```{r}
+mean_simple_anual <- R*dias_cot
+mean_simple_anual
+```
+
+Media diaria de los log-rendimientos `r mean_log`
+Desviacion estandar diaria`r sigma_log`
+Volatilidad anual `r sigma_anual`
+Rendimiento anual compatible con GBM `r mu_gbm_anual`
+
+---
+
+## d) Interpretacion
+Porque si solo multiplico el rendimiento promedio por 252 me da el rendimiento anual del log del precio pero ese no es exactamente el mu que se usa en el GBM para sacar el mu que si usamos en el GBM se le tiene que sumar el ajuste de la volatilidad
+mu = rendimiento anual del log + 0.5*sigma^2
+
+---
+
+
+
+```{r}
+So <- as.numeric(last(precio))
+mu <- mu_gbm_anual
+sigma <- sigma_anual
+So
+mu
+sigma
+```
+
+
+
+# Problema 2
+
+```{r}
+So <- as.numeric(last(precio))
+mu <- mu_gbm_anual
+sigma <- sigma_anual
+So
+mu
+sigma
+```
+
+## a) 
+
+```{r}
+dt_25d <- 25/dias_cot
+
+set.seed(123)
+
+z <- rnorm(100000, mean = 0, sd=1)
+
+St_25d <- So*exp((mu-.5*sigma^2)*dt_25d+sigma*sqrt(dt_25d)*z)
+
+mean(St_25d)
+
+hist(St_25d, n=100)
+abline(v=So, col="red", lwd=2)
+```
+
+## b) 
+
+```{r}
+prob_caida <- mean(St_25d<.95*So)
+
+prob_caida
+```
+
+```{r}
+prob_caida*100
+```
+
+La probabilidad de que el precio caiga mas de 5% en 25 dias es de 35.751%.
+
+---
+
+## c)
+
+```{r}
+prob_caida>.10
+```
+si se activa
+
+## d) 
+
+```{r}
+media_teo <- So*exp(mu*dt_25d)
+
+media_emp <- mean(St_25d)
+
+media_teo
+media_emp
+```
+
+```{r}
+sqrt((media_emp-media_teo)^2)
+```
+
+
+## e)
+
+```{r}
+dt_105d <- 105/dias_cot
+
+set.seed(123)
+
+z <- rnorm(100000, mean = 0, sd=1)
+```
+
+
+```{r}
+dSt <- mu*So*dt_105d+sigma*So*sqrt(dt_105d)*z
+
+St_apro <- So+dSt
+```
+
+```{r}
+prob_apro <- mean(St_apro>1.04*So)
+
+prob_apro
+```
+
+
+```{r}
+St_exacta <- So*exp((mu-.5*sigma^2)*dt_105d+sigma*sqrt(dt_105d)*z)
+
+prob_exacta <- mean(St_exacta>1.04*So)
+
+prob_exacta
+```
+
+```{r}
+prob_apro*100
+prob_exacta*100
+```
+
+
+## f)
+
+```{r}
+sqrt((prob_apro-prob_exacta)^2)
+```
+
+
+La solucion exacta del GBM es la que garantiza precios positivos porque usa una exponenciall a aproximacion con dS no los garantiza.
+
+# Problema 3
+
+```{r}
+So_A <- 210
+So_B <- 130
+So_C <- 110
+
+mu_A <- .11
+mu_B <- .09
+mu_C <- .20
+
+sigma_A <- .28
+sigma_B <- .42
+sigma_C <- .52
+
+T <- 1
+```
+
+## a)
+
+```{r}
+V0 <- 110*So_A+160*So_B+170*So_C
+
+V0
+```
+
+
+
+## b)
+
+```{r}
+set.seed(123)
+
+zA <- rnorm(100000, mean = 0, sd=1)
+zB <- rnorm(100000, mean = 0, sd=1)
+zC <- rnorm(100000, mean = 0, sd=1)
+```
+
+```{r}
+St_A <- So_A*exp((mu_A-.5*sigma_A^2)*T+sigma_A*sqrt(T)*zA)
+
+St_B <- So_B*exp((mu_B-.5*sigma_B^2)*T+sigma_B*sqrt(T)*zB)
+
+St_C <- So_C*exp((mu_C-.5*sigma_C^2)*T+sigma_C*sqrt(T)*zC)
+```
+
+```{r}
+Vt <- 110*St_A+160*St_B+170*St_C
+
+head(Vt)
+```
+
+## c)
+
+```{r}
+media_port <- mean(Vt)
+
+media_port
+```
+
+```{r}
+prob_perdida <- mean(Vt<V0-10000)
+
+prob_perdida
+```
+
+```{r}
+prob_perdida*100
+```
+
+
+## d)
+
+```{r}
+prob_perdida<=.22
+```
+
+se conserva el portafolio porque la probabilidad de perder mas de 10000 es menor o igual a 22% 
+si usara el mismo vector de shocks para los 3 activos ya no serian independientes porque todos tendrian el mismo shock al mismo tiempo y eso cambiaria el riesgo del portafolio
+
