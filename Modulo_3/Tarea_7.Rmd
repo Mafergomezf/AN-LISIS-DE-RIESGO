@@ -166,13 +166,13 @@ En los datos reales los rendimientos pueden tener colas mas pesadas, sesgo y per
 
 Para la aproximacion local:
 
-DeltaS ~ N(mu*S0*T, sigma^2*S0^2*T)
+`DeltaS ~ N(mu*S0*T, sigma^2*S0^2*T)`
 
 entonces estandarizo en 0 para sacar P(DeltaS<0).
 
 Para la solucion exacta uso que:
 
-log(St) ~ N(log(S0)+(mu-.5*sigma^2)*T, sigma^2*T)
+`log(St) ~ N(log(S0)+(mu-.5*sigma^2)*T, sigma^2*T)`
 
 y con eso estandarizo log(S0) para sacar P(St<S0).
 
@@ -245,13 +245,13 @@ A 5 dias espero que los resultados sean parecidos porque es un periodo corto y l
 
 Para la aproximacion local:
 
-DeltaS ~ N(mu*S0*T, sigma^2*S0^2*T)
+`DeltaS ~ N(mu*S0*T, sigma^2*S0^2*T)`
 
 entonces estandarizo en 0 para sacar P(DeltaS<0).
 
 Para la solucion exacta uso que:
 
-log(St) ~ N(log(S0)+(mu-.5*sigma^2)*T, sigma^2*T)
+`log(St) ~ N(log(S0)+(mu-.5*sigma^2)*T, sigma^2*T)`
 
 y con eso estandarizo log(S0) para sacar P(St<S0).
 
