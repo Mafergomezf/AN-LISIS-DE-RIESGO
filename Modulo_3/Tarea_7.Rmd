@@ -144,21 +144,37 @@ tabla_p2 <- data.frame(
 tabla_p2
 ```
 
-TRUE significa que rechazo H0 de normalidad y FALSE que no la rechazo
+TRUE significa que rechazo H0 de normalidad y FALSE que no la rechazo.
 
 ## f)
 
-La prueba que esta mas relacionasa con el supuesto del GBM es la de los log-rendimientos porque bajo GBM los cambios del log del precio son los que se modelan como normales.
+La prueba que esta mas relacionada con el supuesto del GBM es la de los log-rendimientos porque bajo GBM los cambios del log del precio son normales:
+
+r = log(St/S0) ~ Normal
+
+por eso esta prueba es la que esta mas directamente relacionada con el modelo.
 
 ## g)
 
-Probar normalidad sobre todos los log precios juntos se tiene que tomar con cuidado porque el precio va cambiando con el tiempo y no son observaciones con la misma media durante toda la historia.
+Probar normalidad sobre todos los log precios juntos se tiene que tomar con cuidado porque el precio va cambiando con el tiempo y no son observaciones con la misma media ni la misma varianza durante toda la historia.
 
 ## h)
 
-En los datos reales los rendimientos pueden tener colas mas pesadas, sesgo y periodos donde la volatilidad se concentra. Entonces aunque el GBM nos sirve como modelo los datos reales no necesariamente se ven perfectamente normales
+En los datos reales los rendimientos pueden tener colas mas pesadas, sesgo y periodos donde la volatilidad se concentra. Entonces aunque el GBM nos sirve como modelo los datos reales no necesariamente se ven perfectamente normales.
 
 # Problema 3. Probabilidad teórica y empírica a corto plazo
+
+Para la aproximacion local:
+
+DeltaS ~ N(mu*S0*T, sigma^2*S0^2*T)
+
+entonces estandarizo en 0 para sacar P(DeltaS<0).
+
+Para la solucion exacta uso que:
+
+log(St) ~ N(log(S0)+(mu-.5*sigma^2)*T, sigma^2*T)
+
+y con eso estandarizo log(S0) para sacar P(St<S0).
 
 ```{r}
 dt_5d <- 5/dias_cot
@@ -226,6 +242,18 @@ tabla_p3
 A 5 dias espero que los resultados sean parecidos porque es un periodo corto y la aproximacion local todavia no se aleja tanto de la solucion exacta.
 
 # Problema 4. La misma probabilidad a un año
+
+Para la aproximacion local:
+
+DeltaS ~ N(mu*S0*T, sigma^2*S0^2*T)
+
+entonces estandarizo en 0 para sacar P(DeltaS<0).
+
+Para la solucion exacta uso que:
+
+log(St) ~ N(log(S0)+(mu-.5*sigma^2)*T, sigma^2*T)
+
+y con eso estandarizo log(S0) para sacar P(St<S0).
 
 ```{r}
 dt_1anio <- 1
@@ -296,7 +324,7 @@ tabla_p4
 
 ## f)
 
-La aproximacion con dS es la que se deteriora mas cuando aumenta el tiempo porque es una aproximacion local. La solucion exacta ya toma en cuenta la forma exponencial del GBM
+La aproximacion con dS es la que se deteriora mas cuando aumenta el tiempo porque es una aproximacion local. La solucion exacta ya toma en cuenta la forma exponencial del GBM.
 
 # Problema 5. Precios futuros e intervalos de probabilidad
 
