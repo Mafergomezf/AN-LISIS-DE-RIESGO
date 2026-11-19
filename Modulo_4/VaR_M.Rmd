@@ -1,0 +1,236 @@
+---
+title: "VaR_Porta_No_Param"
+author: "Mafer Gómez"
+date: "2026-11-18"
+output: html_document
+---
+
+Estimar el VaR al 99% para un día de un portafolio con 100 acciones de cada uno de los siguientes activos: 
+- GFNORTEO
+- BIMBO
+- WALMEX
+- AMERICA MÓVIL
+
+Bajamos los datos, definimos precio y sacamos el rendimiento logaritmico. 
+
+```{r}
+library(quantmod)
+clave <- c("GFNORTEO.MX", "BIMBOA.MX", "WALMEX.MX", "AMXB.MX")
+numero <- c(100, 100, 100, 100)
+confianza <- 0.99
+getSymbols(clave, src = "yahoo", from = "2019-01-01")
+precio1 <- na.omit(Ad(get(clave[1])))
+precio2 <- na.omit(Ad(get(clave[2])))
+precio3 <- na.omit(Ad(get(clave[3])))
+precio4 <- na.omit((Ad(get(clave[4]))))
+precios <- merge.xts(precio1, precio2, precio3, precio4)
+colnames(precios) <- clave
+rend1 <- na.omit(dailyReturn(precio1, type = "log"))
+rend2 <- na.omit(dailyReturn(precio2, type = "log"))
+rend3 <- na.omit(dailyReturn(precio3, type = "log"))
+rend4 <- na.omit(dailyReturn(precio4, type = "log"))
+rendimientos <- merge.xts(rend1, rend2, rend3, rend4)
+colnames(rendimientos) <- clave
+```
+
+Definimos el valor inicial de cada precio (el ultimo dato que tenemos)
+
+```{r}
+precios_comunes <- na.omit(precios)
+S0 <- as.numeric(last(precios_comunes))
+S0
+
+P_hist <- as.matrix(precios_comunes)
+# Alinear los rendimientos con los precios para el backtesting
+R_hist <- as.matrix(na.omit(diff(log(precios_comunes))))
+```
+
+Valor inicial del portafolio
+
+```{r}
+V0 <- sum(numero*S0)
+V0
+```
+
+Simulación Histórica de precios
+
+```{r}
+S_hist <- sweep(exp(R_hist), 2, S0, "*")
+S_hist[1:6, ]
+```
+
+Definiar la F PyG y seleccionar el Cuantil del VaR
+
+```{r}
+V_hist <- as.numeric(S_hist %*% numero)
+PL_hist <- V_hist-V0
+VaR99 <- as.numeric(quantile(PL_hist, probs=1-confianza))
+VaR99
+-VaR99
+```
+
+
+
+
+Estimar el Expected Short Fall (ESF)
+
+```{r}
+ESF99 <- mean(PL_hist[PL_hist<=VaR99])
+ESF99
+-ESF99
+```
+
+
+Metodología por simulación de precios usando montecarlo
+
+Estimación de los parametros de la ecuación del precio
+
+```{r}
+medias_log <- colMeans(R_hist)
+volatilidades <- apply(R_hist, 2, sd)
+correlaciones <- cor(R_hist)
+mu_GBM <- medias_log + 0.5 * volatilidades^2
+medias_log
+volatilidades
+correlaciones
+mu_GBM
+```
+
+Generar los valores aleatorios epsilons. Estos deben tener la misma correlación que los activos
+
+```{r}
+set.seed(456)
+n_sim <- 300000
+epsilons <- matrix(rnorm(n_sim*length(clave)), ncol=length(clave))
+epsilons_cor <- epsilons %*% chol(correlaciones)
+colnames(epsilons_cor) <- clave
+cor(epsilons_cor)
+```
+
+
+Con todos los elementos,  hacer la simulación de precios
+
+```{r}
+S_mc <- matrix(NA_real_, nrow=n_sim, ncol=length(clave))
+colnames(S_mc) <- clave
+
+# Los parámetros estimados son diarios; simulamos un día bursátil
+for (j in 1:length(clave)) {
+  S_mc[,j] <- S0[j]*exp((mu_GBM[j]-0.5*volatilidades[j]^2)+
+                         volatilidades[j]*epsilons_cor[,j])
+}
+head(S_mc)
+```
+
+
+Estimar el valor del portafolio bajo los nuevos precios y construir la nueva función de pérdidas y ganancias
+
+```{r}
+V_mc <- as.numeric(S_mc %*% numero)
+PL_mc <- V_mc-V0
+summary(PL_mc)
+```
+
+Seleccionar el cuantil para el VaR
+
+```{r}
+VaR99_mc <- as.numeric(quantile(PL_mc, probs=1-confianza))
+VaR99_mc
+-VaR99_mc
+```
+
+
+
+¿Que tan bueno es el VaR? 
+
+BACK TESTING
+
+Evolución del valor real del portafolioa través del tiempo
+
+```{r}
+Porta_Hist <- as.numeric(P_hist %*% numero)
+plot(index(precios_comunes), Porta_Hist, type="l",
+     main="Valor historico del portafolio",
+     xlab="Fecha", ylab="Valor del portafolio (MXN)")
+```
+
+Calcular la pérdida diaria y comparar y ver cuantas veces ha excedido esa pérdida el VaR
+
+```{r}
+PL_real <- diff(Porta_Hist)
+# Primer acercamiento ilustrativo: el VaR fijo se compara con perdidas historicas
+sum(PL_real<VaR99)
+mean(PL_real<VaR99)
+```
+
+
+
+Segudno acercamiento: un VaR diario para muchos días
+
+```{r}
+ventana <- 250*2
+dias_test <- 250*2
+
+if (nrow(P_hist) < ventana + dias_test + 1) {
+  stop("No hay suficientes observaciones para las ventanas elegidas.")
+}
+
+VaR_back <- numeric(dias_test)
+PL_back <- numeric(dias_test)
+fechas_back <- as.Date(rep(NA, dias_test))
+
+for (i in 1:dias_test) {
+
+  # Índice del día en que hacemos el pronóstico, al cierre.
+  t <- nrow(P_hist) - dias_test - 1 + i
+
+  # Rendimientos disponibles hasta el cierre de t.
+  # R_hist[k, ] es el rendimiento de P_hist[k, ] a P_hist[k+1, ].
+  R_ventana <- R_hist[(t - ventana):(t - 1), ]
+
+  # Precios y valor del portafolio al cierre de t.
+  S0_t <- as.numeric(P_hist[t, ])
+  V0_t <- sum(numero * S0_t)
+
+  # Simulación histórica para el día t+1.
+  S_sim <- sweep(exp(R_ventana), 2, S0_t, "*")
+  V_sim <- as.numeric(S_sim %*% numero)
+  PL_sim <- V_sim - V0_t
+
+  # Cuantil negativo: misma convención que VaR99.
+  VaR_back[i] <- as.numeric(quantile(PL_sim, probs = 1 - confianza))
+
+  # P&L realmente observado de t a t+1.
+  PL_back[i] <- Porta_Hist[t + 1] - Porta_Hist[t]
+  fechas_back[i] <- as.Date(index(precios_comunes)[t + 1])
+}
+```
+
+
+
+```{r}
+excede <- ifelse(PL_back < VaR_back, 1, 0)
+
+resultados_back <- data.frame(
+  fecha = fechas_back,
+  VaR_pronosticado = VaR_back,
+  PL_real = PL_back,
+  excepcion = excede
+)
+
+head(resultados_back)
+
+n_excepciones <- sum(excede)
+tasa_excepciones <- mean(excede)
+excepciones_esperadas <- dias_test * (1 - confianza)
+```
+
+
+```{r}
+data.frame(
+  Excepciones_observadas=n_excepciones,
+  Excepciones_esperadas=excepciones_esperadas,
+  Tasa_observada=tasa_excepciones,
+  Tasa_esperada=1-confianza
+)
+```
